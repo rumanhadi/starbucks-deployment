@@ -1,0 +1,47 @@
+import streamlit as st
+import pandas as pd
+import joblib
+
+# Page Title
+st.title("☕ Starbucks Decision Tree Model Deployment")
+st.write("Aapka trained Decision Tree model successfully load ho chuka hai. Neeche values enter karke prediction check karein:")
+
+# Model aur Encoders load karna
+@st.cache_resource
+def load_model():
+    model = joblib.load('starbucks_dt_model.pkl')
+    le_prep = joblib.load('le_prep.pkl')
+    le_target = joblib.load('le_target.pkl')
+    features = joblib.load('feature_cols.pkl')
+    return model, le_prep, le_target, features
+
+model, le_prep, le_target, feature_cols = load_model()
+
+# User Inputs
+st.subheader("Enter Beverage Details:")
+beverage_prep = st.selectbox("Beverage Prep", options=list(le_prep.classes_))
+calories = st.number_input("Calories", value=150.0)
+total_fat = st.number_input("Total Fat (g)", value=2.5)
+trans_fat = st.number_input("Trans Fat (g)", value=0.5)
+sat_fat = st.number_input("Saturated Fat (g)", value=0.0)
+sodium = st.number_input("Sodium (mg)", value=10.0)
+carbs = st.number_input("Total Carbohydrates (g)", value=120.0)
+cholesterol = st.number_input("Cholesterol (mg)", value=30.0)
+fibre = st.number_input("Dietary Fibre (g)", value=0.0)
+sugars = st.number_input("Sugars (g)", value=25.0)
+protein = st.number_input("Protein (g)", value=6.0)
+caffeine = st.number_input("Caffeine (mg)", value=75.0)
+
+# Prediction Button
+if st.button("Run Prediction"):
+    prep_encoded = le_prep.transform([beverage_prep])[0]
+    
+    input_data = pd.DataFrame([[
+        prep_encoded, calories, total_fat, trans_fat, sat_fat,
+        sodium, carbs, cholesterol, fibre, sugars, protein, caffeine
+    ]], columns=feature_cols)
+    
+    pred_idx = model.predict(input_data)[0]
+    predicted_category = le_target.inverse_transform([pred_idx])[0]
+    
+    st.success(f"**Predicted Beverage Category:** {predicted_category}")
